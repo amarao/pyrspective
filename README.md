@@ -12,5 +12,7 @@ something (inkscape) to open SVG files on your computer via xdg-open.
 
 It not library or ready application - just code.
 
-1prespective.py generates 1perspective.svg with 1 perspective
-helper lines. All settings are done via init values in source code.
+1prespective.py generates 1perspective.svg with heler line for
+1 varnish point's perspective.
+
+All settings are done via init values in source code.
