@@ -1,10 +1,10 @@
 #!/usr/bin/python
-
+import math
 import svgwrite
 from subprocess import call
 from lineClipping import cohensutherland
 
-def get_ray(horizon, vanish, helper, step_size, step, max_x, max_y):
+def get_vanish_ray(horizon, vanish, helper, step_size, step, max_x, max_y):
     '''
         Calculate clipped ray (line) for vanish point
         at (horizon; vanish) for horizontal horizon
@@ -39,70 +39,47 @@ def get_ray(horizon, vanish, helper, step_size, step, max_x, max_y):
     end_y = horizon
 
     x1, y1, x2, y2 = cohensutherland(0, max_y, max_x, 0, start_x, start_y, end_x, end_y, 0)
-    print x1, y1, x2, y2
     return (x1,y1), (x2, y2)
     
-#    answer = [start_x, start_y, end_x, end_y]
-   
-    #  check for left X-clipping for start_x
-#    if start_x < 0:
-#        new_x = 0
-#        new_y = helper - float((helper - horizon) * abs(start_x)) / (vanish + abs(start_x))  # crossing point of left side
-#        answer[0] = new_x
-#        answer[1] = new_y
 
-    # check for right X-clipping for start_x
-#    if start_x > max_x:
-#        new_x = max_x
-#        new_y = helper - float((helper-horizon) * (start_x - max_x)) / (max_x - vanish + start_x - max_x ) # crossing point on right side
-#        answer[0] = new_x
-#        answer[1] = new_y
-
-
-#    return (answer[0], answer[1]), (answer[2], answer[3])
-    
-
-def get_step(lower, upper, vanish, max_x, step_size,step):
+def get_parallel_line(horizon, helper, step_size, step, max_x, max_y):
     '''
-        calculate heler line for step 'Step'
-        if line does not fit in [0;x] range
-        it recalculated to be clipped
-        return lower position for line
+        return paralllel to horizon line
 
-        see proofs/proof1.png for math
+        line counted from helper line toward horizon with step_size
+        positive step - to horizon, negative - away from
+
+        line is clipped to max_x, max_y
+
+        return (x1;y1), (x2;y2) set for clipped line or four None if line is invisible
+
     '''
-    projected_X = vanish + step * step_size
-    if projected_X < 0:
-        a = - projected_X 
-        L = lower - upper
-        M = vanish
-        c = float (L * a) / (M + a)
-        y = lower - c 
-        return 0, y 
-    elif projected_X > max_x:
-        a = projected_X - max_x
-        L = lower - upper
-        M = max_x - vanish  # triangle in other direction
-        c = float (L * a) / (M + a)
-        y = lower - c
-        return max_x,y
+    #see proofs/proof2.png
+    H = float(abs(horizon - helper))
+    z1 = float(step_size)
+    n = float(step)
+    zN = math.copysign(H * n / (n + H/z1 -1), horizon-helper)
+    new_y = helper + zN
+    print H, zN, new_y
+    if new_y < 0 or new_y > max_y:
+        return (None, None), (None, None)
     else:
-        return projected_X, lower
+        return (0, new_y), (max_x, new_y)
 
 class Canvas:
     def __init__(self):
-        self.x = 1920
-        self.y = 1080
+        self.x = 800
+        self.y = 600
         self.dotsize = 3
-        self.horizon = -200 
-        self.vanish = 1880
+        self.horizon = -100
+        self.vanish = 200
         self.horizon_color = svgwrite.rgb(50, 50, 50, '%')
         self.helper_color = svgwrite.rgb(50, 50, 75, '%')
         self.helper_opacity = 0.5
         self.filename='1perspective.svg'
-        self.helper = 2000
-        self.step_size = 64
-        self.steps = 1000
+        self.helper = 600
+        self.step_size = 20 
+        self.steps = 200
 
 c = Canvas()
 
@@ -111,12 +88,18 @@ dwg.add(dwg.line((0, c.horizon), (c.x, c.horizon), stroke = c.horizon_color))
 dwg.add(dwg.circle(center = (c.vanish, c.horizon), r = c.dotsize , stroke = c.horizon_color, stroke_opacity = c.helper_opacity))
 dwg.add(dwg.line((0, c.helper), (c.x, c.helper), stroke = c.helper_color))
 for step in range(0,c.steps):
-    begin, end = get_ray(c.horizon, c.vanish, c.helper, c.step_size, -step, c.x, c.y)
+    begin, end = get_vanish_ray(c.horizon, c.vanish, c.helper, c.step_size, -step, c.x, c.y)
     if None not in begin:
         dwg.add(dwg.line(begin, end, stroke = c.horizon_color, stroke_opacity = c.helper_opacity))
-    begin, end = get_ray(c.horizon, c.vanish, c.helper, c.step_size, step, c.x, c.y)
+    begin, end = get_vanish_ray(c.horizon, c.vanish, c.helper, c.step_size, step, c.x, c.y)
     if None not in begin:
         dwg.add(dwg.line(begin, end, stroke = c.horizon_color, stroke_opacity = c.helper_opacity))
+
+for step in range(0,c.steps):
+    begin, end = get_parallel_line(c.horizon, c.helper, c.step_size, step, c.x, c.y)
+    if None not in begin:
+        dwg.add(dwg.line(begin, end, stroke=c.horizon_color, stroke_opacity = c.helper_opacity))
+        
 
 dwg.save()
 call(['xdg-open', c.filename])
