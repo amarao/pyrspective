@@ -42,7 +42,7 @@ def get_vanish_ray(horizon, vanish, helper, step_size, step, max_x, max_y):
     return (x1,y1), (x2, y2)
     
 
-def get_parallel_line(horizon, helper, step_size, step, max_x, max_y):
+def get_parallel_line(horizon, distance, helper, step_size, step, max_x, max_y):
     '''
         return paralllel to horizon line
 
@@ -55,12 +55,13 @@ def get_parallel_line(horizon, helper, step_size, step, max_x, max_y):
 
     '''
     #see proofs/proof2.png
-    H = float(abs(horizon - helper))
-    z1 = float(step_size)
+    B = float(distance)
+    H = float((horizon - helper))
+    x = float(step_size)
     n = float(step)
-    zN = math.copysign(H * n / (n + H/z1 -1), horizon-helper)
+    zN = H * n * x / (n * x + B)
     new_y = helper + zN
-    print H, zN, new_y
+    print n, x, H, zN, new_y
     if new_y < 0 or new_y > max_y:
         return (None, None), (None, None)
     else:
@@ -71,15 +72,16 @@ class Canvas:
         self.x = 800
         self.y = 600
         self.dotsize = 3
-        self.horizon = -100
-        self.vanish = 200
+        self.horizon = 0
+        self.vanish = 400
+        self.distance = 20 
         self.horizon_color = svgwrite.rgb(50, 50, 50, '%')
         self.helper_color = svgwrite.rgb(50, 50, 75, '%')
         self.helper_opacity = 0.5
-        self.filename='1perspective.svg'
+        self.filename='perspective.svg'
         self.helper = 600
-        self.step_size = 20 
-        self.steps = 200
+        self.step_size = 80 
+        self.steps = 10
 
 c = Canvas()
 
@@ -95,9 +97,10 @@ for step in range(0,c.steps):
     if None not in begin:
         dwg.add(dwg.line(begin, end, stroke = c.horizon_color, stroke_opacity = c.helper_opacity))
 
-for step in range(0,c.steps):
-    begin, end = get_parallel_line(c.horizon, c.helper, c.step_size, step, c.x, c.y)
+for step in range(1,c.steps+1):
+    begin, end = get_parallel_line(c.horizon, c.distance, c.helper, c.step_size, step, c.x, c.y)
     if None not in begin:
+        print begin, end
         dwg.add(dwg.line(begin, end, stroke=c.horizon_color, stroke_opacity = c.helper_opacity))
         
 
