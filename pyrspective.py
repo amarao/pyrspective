@@ -1,6 +1,5 @@
 #!/usr/bin/python
 import math
-import svgwrite
 from subprocess import call
 from lineClipping import cohensutherland
 
@@ -85,25 +84,73 @@ class Canvas:
 
 c = Canvas()
 
-dwg = svgwrite.Drawing(c.filename, size=(c.x,c.y), profile='tiny')
-dwg.add(dwg.line((0, c.horizon), (c.x, c.horizon), stroke = c.horizon_color))
-dwg.add(dwg.circle(center = (c.vanish, c.horizon), r = c.dotsize , stroke = c.horizon_color, stroke_opacity = c.helper_opacity))
-dwg.add(dwg.line((0, c.helper), (c.x, c.helper), stroke = c.helper_color))
-for step in range(0,c.steps):
-    begin, end = get_vanish_ray(c.horizon, c.vanish, c.helper, c.step_size, -step, c.x, c.y)
-    if None not in begin:
-        dwg.add(dwg.line(begin, end, stroke = c.horizon_color, stroke_opacity = c.helper_opacity))
-    begin, end = get_vanish_ray(c.horizon, c.vanish, c.helper, c.step_size, step, c.x, c.y)
-    if None not in begin:
-        dwg.add(dwg.line(begin, end, stroke = c.horizon_color, stroke_opacity = c.helper_opacity))
+class Pyrspective:
+    def __ini__(self):
+        pass
 
-for step in range(1,c.steps+1):
-    begin, end = get_parallel_line(c.horizon, c.distance, c.helper, c.step_size, step, c.x, c.y)
-    if None not in begin:
-        print begin, end
-        dwg.add(dwg.line(begin, end, stroke=c.horizon_color, stroke_opacity = c.helper_opacity))
+    def canvas(self, x, y):
+        '''
+            Set canvas size
+        '''
+        self.max_x = x
+        self.max_y = y
+
+    def add_horizon(self, horizon, angle, id=None):
+        '''
+            Add horizon to horizons list
+            or replace existing (is id is not None)
+            horizon is defined by distance
+            from canvas start (0, 0)
+            Can add vanish point is vanish is not None
+            return horizon ID
+
+        '''
+        pass
+
+    def add_horizon_by_points(self, begin, end, id=None):
+        '''
+            Add horizon to horizon list
+            or replace existing (if id is not None)
+            horizon is defined by two points
+            each point has two coords (x,y)
+            They can be outside canvas
+            Can add vanish point is vanish is not None
+            return horizon ID
+        '''
+        pass
         
 
-dwg.save()
+    def add_vanish_point(self, point, horizon_id=1):
+        '''
+            Add vanish point to the horizon
+            If point lies outside horizon, vertical projection
+            is taken, if this not possible (horizon is vertical),
+            horizontal projection happens.
+        '''
+        pass
+            
+
+if __name__ == '__main__':
+    import svgwrite
+    dwg = svgwrite.Drawing(c.filename, size=(c.x,c.y), profile='tiny')
+    dwg.add(dwg.line((0, c.horizon), (c.x, c.horizon), stroke = c.horizon_color))
+    dwg.add(dwg.circle(center = (c.vanish, c.horizon), r = c.dotsize , stroke = c.horizon_color, stroke_opacity = c.helper_opacity))
+    dwg.add(dwg.line((0, c.helper), (c.x, c.helper), stroke = c.helper_color))
+    for step in range(0,c.steps):
+        begin, end = get_vanish_ray(c.horizon, c.vanish, c.helper, c.step_size, -step, c.x, c.y)
+        if None not in begin:
+            dwg.add(dwg.line(begin, end, stroke = c.horizon_color, stroke_opacity = c.helper_opacity))
+        begin, end = get_vanish_ray(c.horizon, c.vanish, c.helper, c.step_size, step, c.x, c.y)
+        if None not in begin:
+            dwg.add(dwg.line(begin, end, stroke = c.horizon_color, stroke_opacity = c.helper_opacity))
+    
+    for step in range(1,c.steps+1):
+        begin, end = get_parallel_line(c.horizon, c.distance, c.helper, c.step_size, step, c.x, c.y)
+        if None not in begin:
+            print begin, end
+            dwg.add(dwg.line(begin, end, stroke=c.horizon_color, stroke_opacity = c.helper_opacity))
+            
+
+    dwg.save()
 call(['xdg-open', c.filename])
 
